@@ -1,9 +1,14 @@
 package com.salaon.userservice.controller;
 
 import com.salaon.userservice.entity.User;
+import com.salaon.userservice.exception.UserException;
 import com.salaon.userservice.repository.UserRepository;
+import com.salaon.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,44 +18,32 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserController {
 
-
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     @GetMapping("/api/users/{id}")
-    public User getUserById(@PathVariable("id") Long id)
+    public ResponseEntity<User> getUserById(@PathVariable("id") Long id)
     {
-        Optional<User> userOptional=userRepository.findById(id);
-        return userOptional.orElseThrow(()->new RuntimeException("User not found"));
+        return new ResponseEntity<>(userService.getUserById(id), HttpStatus.OK);
     }
 
     @DeleteMapping("/api/users/{id}")
-    public String deleteUserById(@PathVariable("id") Long userId) {
-        Optional<User> userOptional=userRepository.findById(userId);
-        if(userOptional.isEmpty()) {
-            throw new RuntimeException("User not found");
-        }
-        userRepository.deleteById(userId);
-        return "User deleted";
+    public ResponseEntity<String> deleteUserById(@PathVariable("id") Long userId) {
+        userService.deleteUser(userId);
+        return ResponseEntity.ok("User deleted");
     }
 
     @PutMapping("/api/users/{id}")
-    public User updateUserById(@PathVariable("id") Long userId, @RequestBody User user) {
-        Optional<User> userOptional=userRepository.findById(userId);
-        if(userOptional.isEmpty()) {
-            throw new RuntimeException("User not found");
-        }
-        user.setId(userId);
-        user.setCreatedAt(userOptional.get().getCreatedAt());
-        return userRepository.save(user);
+    public ResponseEntity<User> updateUserById(@PathVariable("id") Long userId, @RequestBody User user) {
+        return new ResponseEntity<>(userService.updateUser(user,userId), HttpStatus.OK);
     }
 
     @PostMapping("/api/users")
-    public User createUser(@RequestBody @Valid User user) {
-        return userRepository.save(user);
+    public ResponseEntity<User> createUser(@RequestBody @Valid User user) {
+        return new ResponseEntity<>(userService.createUser(user),HttpStatus.CREATED);
     }
 
     @GetMapping("/api/users")
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public ResponseEntity<List<User>> getAllUsers() {
+        return new ResponseEntity<>( userService.getUsers(),HttpStatus.OK);
     }
 }
